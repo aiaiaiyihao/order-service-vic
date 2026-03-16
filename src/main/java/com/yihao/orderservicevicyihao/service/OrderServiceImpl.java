@@ -1,10 +1,13 @@
 package com.yihao.orderservicevicyihao.service;
 
+import com.yihao.orderservicevicyihao.dto.OrderRequestDTO;
+import com.yihao.orderservicevicyihao.dto.OrderResponseDTO;
 import com.yihao.orderservicevicyihao.entity.Order;
 import com.yihao.orderservicevicyihao.exception.OrderNotFoundException;
 import com.yihao.orderservicevicyihao.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,45 +19,58 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final ModelMapper modelMapper;
 
     @Override
-    public Order createOrder(Order order) {
+    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
+        Order order = modelMapper.map(orderRequestDTO, Order.class);
+
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with id: {}", savedOrder.getId());
-        return savedOrder;
+
+        return modelMapper.map(savedOrder, OrderResponseDTO.class);
     }
 
     @Override
-    public Order getOrderById(Long id) {
+    public OrderResponseDTO getOrderById(Long id) {
         log.info("Fetching order with id: {}", id);
-        return orderRepository.findById(id)
+
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + id));
+
+        return modelMapper.map(order, OrderResponseDTO.class);
     }
 
     @Override
-    public List<Order> getAllOrders() {
+    public List<OrderResponseDTO> getAllOrders() {
         log.info("Fetching all orders");
-        return orderRepository.findAll();
+
+        return orderRepository.findAll()
+                .stream()
+                .map(order -> modelMapper.map(order, OrderResponseDTO.class))
+                .toList();
     }
 
     @Override
-    public Order updateOrder(Long id, Order updatedOrder) {
+    public OrderResponseDTO updateOrder(Long id, OrderRequestDTO orderRequestDTO) {
         log.info("Updating order with id: {}", id);
 
         Order existingOrder = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + id));
 
-        existingOrder.setUserId(updatedOrder.getUserId());
-        existingOrder.setProductName(updatedOrder.getProductName());
-        existingOrder.setQuantity(updatedOrder.getQuantity());
-        existingOrder.setPrice(updatedOrder.getPrice());
-        existingOrder.setStatus(updatedOrder.getStatus());
+        existingOrder.setUserId(orderRequestDTO.getUserId());
+        existingOrder.setProductName(orderRequestDTO.getProductName());
+        existingOrder.setQuantity(orderRequestDTO.getQuantity());
+        existingOrder.setPrice(orderRequestDTO.getPrice());
+        existingOrder.setStatus(orderRequestDTO.getStatus());
         existingOrder.setUpdatedAt(LocalDateTime.now());
 
-        return orderRepository.save(existingOrder);
+        Order savedOrder = orderRepository.save(existingOrder);
+
+        return modelMapper.map(savedOrder, OrderResponseDTO.class);
     }
 
     @Override

@@ -1,18 +1,19 @@
 package com.yihao.orderservicevicyihao.service;
 
-import com.yihao.orderservicevicyihao.entity.Order;
+import com.yihao.orderservicevicyihao.dto.OrderRequestDTO;
+import com.yihao.orderservicevicyihao.dto.OrderResponseDTO;
 
 import java.util.List;
 
 public interface OrderService {
 
-    Order createOrder(Order order);
+    OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO);
 
-    Order getOrderById(Long id);
+    OrderResponseDTO getOrderById(Long id);
 
-    List<Order> getAllOrders();
+    List<OrderResponseDTO> getAllOrders();
 
-    Order updateOrder(Long id, Order updatedOrder);
+    OrderResponseDTO updateOrder(Long id, OrderRequestDTO orderRequestDTO);
 
     void deleteOrder(Long id);
 }
