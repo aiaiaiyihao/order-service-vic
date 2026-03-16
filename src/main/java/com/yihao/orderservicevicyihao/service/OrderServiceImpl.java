@@ -3,7 +3,9 @@ package com.yihao.orderservicevicyihao.service;
 import com.yihao.orderservicevicyihao.dto.OrderRequestDTO;
 import com.yihao.orderservicevicyihao.dto.OrderResponseDTO;
 import com.yihao.orderservicevicyihao.entity.Order;
+import com.yihao.orderservicevicyihao.event.OrderCreatedEvent;
 import com.yihao.orderservicevicyihao.exception.OrderNotFoundException;
+import com.yihao.orderservicevicyihao.producer.OrderProducer;
 import com.yihao.orderservicevicyihao.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ModelMapper modelMapper;
+    private final OrderProducer orderProducer;
 
     @Override
     public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
@@ -30,6 +33,17 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with id: {}", savedOrder.getId());
+
+        OrderCreatedEvent event = new OrderCreatedEvent();
+        event.setOrderId(savedOrder.getId());
+        event.setUserId(savedOrder.getUserId());
+        event.setProductName(savedOrder.getProductName());
+        event.setQuantity(savedOrder.getQuantity());
+        event.setPrice(savedOrder.getPrice());
+        event.setStatus(savedOrder.getStatus());
+        event.setCreatedAt(savedOrder.getCreatedAt());
+
+        orderProducer.sendOrderCreatedEvent(event);
 
         return modelMapper.map(savedOrder, OrderResponseDTO.class);
     }
